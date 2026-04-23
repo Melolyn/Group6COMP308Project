@@ -73,7 +73,7 @@ module.exports = gql`
   type Mutation {
     register(input: RegisterInput!): AuthPayload!
     login(input: LoginInput!): AuthPayload!
-     assignIssue(issueId: ID!, assignedTo: String!): Issue!
+     assignIssue(id: ID!, assignedTo: String!): Issue!
     createIssue(input: CreateIssueInput!): Issue!
     updateIssueStatus(id: ID!, status: String!): Issue!
   }
