@@ -6,7 +6,7 @@ export type AccessibilityCategory =
   | "Crosswalk Signal"
   | "Transit Access"
   | "Building Entrance"
-  | "Wayfinding"
+  | "Wayfinding"  
   | "Washroom Access"
   | "Other";
 
@@ -20,15 +20,12 @@ export interface Issue {
   status: IssueStatus;
   location: string;
   priority: IssuePriority;
-
-  // 🔥 NEW FIELD (assignment)
   assignedTo?: string;
-
+  upvotes?: number;
+  supportedByCurrentUser?: boolean;
   imageUrl?: string;
   aiSummary?: string;
-
   reportedBy?: string;
-
   createdAt: string;
   updatedAt: string;
 }

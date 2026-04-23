@@ -10,22 +10,24 @@ module.exports = gql`
   }
 
   type Issue {
-  id: ID!
-  title: String!
-  description: String!
-  category: String!
-  status: String!
-  location: String!
-  priority: String!
-  assignedTo: String
-  imageUrl: String
-  aiSummary: String
-  aiCategory: String
-  aiPriorityReason: String
-  reportedBy: User
-  createdAt: String
-  updatedAt: String
-}
+    id: ID!
+    title: String!
+    description: String!
+    category: String!
+    status: String!
+    location: String!
+    priority: String!
+    assignedTo: String
+    upvotes: Int
+    supportedByCurrentUser: Boolean
+    imageUrl: String
+    aiSummary: String
+    aiCategory: String
+    aiPriorityReason: String
+    reportedBy: User
+    createdAt: String
+    updatedAt: String
+  }
 
   type AuthPayload {
     token: String!
@@ -73,8 +75,9 @@ module.exports = gql`
   type Mutation {
     register(input: RegisterInput!): AuthPayload!
     login(input: LoginInput!): AuthPayload!
-     assignIssue(issueId: ID!, assignedTo: String!): Issue!
     createIssue(input: CreateIssueInput!): Issue!
     updateIssueStatus(id: ID!, status: String!): Issue!
+    assignIssue(id: ID!, assignedTo: String!): Issue!
+    upvoteIssue(id: ID!): Issue!
   }
 `;

@@ -14,6 +14,8 @@ const GET_ALL_ISSUES = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -40,6 +42,8 @@ const GET_MY_ISSUES = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -66,6 +70,8 @@ const GET_ISSUE_BY_ID = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -92,6 +98,8 @@ const CREATE_ISSUE = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -118,6 +126,8 @@ const UPDATE_ISSUE_STATUS = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -144,6 +154,36 @@ const ASSIGN_ISSUE = gql`
       location
       priority
       assignedTo
+      upvotes
+      supportedByCurrentUser
+      imageUrl
+      aiSummary
+      createdAt
+      updatedAt
+      reportedBy {
+        id
+        firstName
+        lastName
+        email
+        role
+      }
+    }
+  }
+`;
+
+const UPVOTE_ISSUE = gql`
+  mutation UpvoteIssue($id: ID!) {
+    upvoteIssue(id: $id) {
+      id
+      title
+      description
+      category
+      status
+      location
+      priority
+      assignedTo
+      upvotes
+      supportedByCurrentUser
       imageUrl
       aiSummary
       createdAt
@@ -168,6 +208,8 @@ type IssueApiResponse = {
   location: string;
   priority: Issue["priority"];
   assignedTo?: string;
+  upvotes?: number;
+  supportedByCurrentUser?: boolean;
   imageUrl?: string;
   aiSummary?: string;
   createdAt: string;
@@ -230,6 +272,14 @@ type AssignIssueVariables = {
   assignedTo: string;
 };
 
+type UpvoteIssueMutation = {
+  upvoteIssue?: IssueApiResponse | null;
+};
+
+type UpvoteIssueVariables = {
+  id: string;
+};
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
@@ -251,6 +301,8 @@ const mapIssue = (issue: IssueApiResponse): Issue => ({
   location: issue.location,
   priority: issue.priority,
   assignedTo: issue.assignedTo,
+  upvotes: issue.upvotes,
+  supportedByCurrentUser: issue.supportedByCurrentUser,
   imageUrl: issue.imageUrl,
   aiSummary: issue.aiSummary,
   reportedBy: issue.reportedBy?.id,
@@ -424,6 +476,36 @@ export const issueService = {
     } catch (error: unknown) {
       console.error("Assign issue error:", getErrorMessage(error));
       handleApolloResultError(error, "Failed to assign issue");
+    }
+  },
+
+  async upvoteIssue(id: string): Promise<Issue> {
+    try {
+      const result = await apolloClient.mutate<
+        UpvoteIssueMutation,
+        UpvoteIssueVariables
+      >({
+        mutation: UPVOTE_ISSUE,
+        variables: { id },
+        errorPolicy: "all",
+      });
+
+      if (result.error) {
+        if (CombinedGraphQLErrors.is(result.error)) {
+          console.error("Upvote issue GraphQL errors:", result.error.errors);
+          throw new Error(result.error.errors[0]?.message || "Failed to support issue");
+        }
+        throw new Error(result.error.message);
+      }
+
+      if (!result.data?.upvoteIssue) {
+        throw new Error("Failed to support issue");
+      }
+
+      return mapIssue(result.data.upvoteIssue);
+    } catch (error: unknown) {
+      console.error("Upvote issue error:", getErrorMessage(error));
+      handleApolloResultError(error, "Failed to support issue");
     }
   },
 };
