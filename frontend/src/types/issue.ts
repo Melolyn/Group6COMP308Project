@@ -13,6 +13,9 @@ export type IssueCategory =
   | "Noise Complaint"
   | "Other";
 
+<<<<<<< Rohit-Budha
+export type IssuePriority = "Low" | "Medium" | "High";
+=======
 // Alias kept for backward compatibility in citizen-facing forms.
 export type AccessibilityCategory = IssueCategory;
 
@@ -50,6 +53,7 @@ export interface IssueAnalyticsData {
   categoryDistribution: DistributionPoint[];
   trend: IssueTrendPoint[];
 }
+>>>>>>> main
 
 export interface Issue {
   id: string;
@@ -59,11 +63,20 @@ export interface Issue {
   status: IssueStatus;
   location: string;
   priority: IssuePriority;
+<<<<<<< Rohit-Budha
+
+  // 🔥 NEW FIELD (assignment)
+  assignedTo?: string;
+
+=======
   assignedTo?: string;
   keywords?: string[];
+>>>>>>> main
   imageUrl?: string;
   aiSummary?: string;
+
   reportedBy?: string;
+
   createdAt: string;
   updatedAt: string;
 }

@@ -1,8 +1,22 @@
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
+
+const httpLink = createHttpLink({
+  uri: "http://localhost:4000/graphql",
+});
+
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem("civicai_token"); // ✅ FIXED
+
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+    },
+  };
+});
 
 export const apolloClient = new ApolloClient({
-  link: new HttpLink({
-    uri: "http://localhost:4000/graphql",
-  }),
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });

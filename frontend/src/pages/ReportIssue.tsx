@@ -19,6 +19,9 @@ const categories: IssueCategory[] = [
 
 export default function ReportIssue() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -26,19 +29,22 @@ export default function ReportIssue() {
     location: "",
     priority: "Medium" as "Low" | "Medium" | "High",
     imageUrl: "",
+    status: "Open" as const,
   });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    await issueService.createIssue({
-      ...form,
-      status: "Open",
-      aiSummary: `AI Summary: ${form.category} issue reported at ${form.location}.`,
-      reportedBy: "Current User",
-    });
-
-    navigate("/my-issues");
+    try {
+      await issueService.createIssue(form);
+      navigate("/my-issues");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit issue");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -126,11 +132,18 @@ export default function ReportIssue() {
             />
           </div>
 
+          {error && (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white transition hover:bg-sky-800"
+            disabled={loading}
+            className="rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white transition hover:bg-sky-800 disabled:opacity-60"
           >
-            Submit Report
+            {loading ? "Submitting..." : "Submit Report"}
           </button>
         </form>
       </div>
