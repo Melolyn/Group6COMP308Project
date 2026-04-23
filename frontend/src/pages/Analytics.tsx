@@ -169,7 +169,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-slate-900">{pageTitle}</h2>
         <p className="mt-2 text-sm text-slate-600">{pageSubtitle}</p>
@@ -318,6 +318,8 @@ export default function Analytics() {
           </div>
         </div>
       </section>
+
+      <HeatmapPlaceholder />
     </div>
   );
 }
