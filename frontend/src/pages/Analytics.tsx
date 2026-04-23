@@ -1,66 +1,87 @@
-import { mockIssues } from "../data/mockIssues";
+import { useEffect, useState } from "react";
+import CategoryChart from "../components/dashboard/CategoryChart";
+import HeatmapPlaceholder from "../components/dashboard/HeatmapPlaceholder";
+import StatusChart from "../components/dashboard/StatusChart";
+import TrendChart from "../components/dashboard/TrendChart";
+import { analyticsService } from "../services/analyticsService";
+import type { IssueAnalyticsData } from "../types/issue";
 
-const categoryCounts = mockIssues.reduce<Record<string, number>>((acc, issue) => {
-  acc[issue.category] = (acc[issue.category] ?? 0) + 1;
-  return acc;
-}, {});
+const emptyAnalyticsData: IssueAnalyticsData = {
+  statusDistribution: [],
+  categoryDistribution: [],
+  trend: [],
+};
 
 export default function Analytics() {
+  const [analytics, setAnalytics] = useState<IssueAnalyticsData>(emptyAnalyticsData);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadAnalytics() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await analyticsService.getAnalyticsData();
+        setAnalytics(data);
+      } catch {
+        setError("Unable to load analytics right now. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void loadAnalytics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600 shadow-sm">
+        Loading analytics...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-sm font-medium text-rose-700 shadow-sm">
+        {error}
+      </div>
+    );
+  }
+
+  if (
+    analytics.statusDistribution.length === 0 &&
+    analytics.categoryDistribution.length === 0 &&
+    analytics.trend.length === 0
+  ) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600 shadow-sm">
+        No analytics data available yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-slate-900">Accessibility analytics</h2>
+        <h2 className="text-3xl font-bold text-slate-900">Staff Analytics</h2>
         <p className="mt-2 text-sm text-slate-600">
-          A simple frontend view for issue trends and service insights.
+          Analyze municipal service demand, issue lifecycle, and response outcomes.
         </p>
       </div>
 
-      <section className="grid gap-5 lg:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-slate-900">Top reported categories</h3>
-          <div className="mt-5 space-y-4">
-            {Object.entries(categoryCounts).map(([category, count]) => (
-              <div key={category}>
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-700">{category}</span>
-                  <span className="text-slate-500">{count}</span>
-                </div>
-                <div className="h-3 rounded-full bg-slate-100">
-                  <div
-                    className="h-3 rounded-full bg-sky-700"
-                    style={{ width: `${Math.min(count * 25, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-slate-900 p-6 text-white shadow-sm">
-          <h3 className="text-xl font-semibold">AI trend insight</h3>
-          <p className="mt-4 text-sm leading-7 text-slate-300">
-            Recent reports suggest the highest impact issues involve crossing safety, sidewalk barriers, and broken ramp access near civic buildings and busy intersections.
-          </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-300">High Priority</p>
-              <p className="mt-2 text-2xl font-bold">{mockIssues.filter((i) => i.priority === "High").length}</p>
-            </div>
-            <div className="rounded-2xl bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-300">Transit / Crossing</p>
-              <p className="mt-2 text-2xl font-bold">
-                {mockIssues.filter(
-                  (i) => i.category === "Crosswalk Signal" || i.category === "Transit Access"
-                ).length}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-300">Resolved</p>
-              <p className="mt-2 text-2xl font-bold">{mockIssues.filter((i) => i.status === "Resolved").length}</p>
-            </div>
-          </div>
-        </div>
+      <section className="grid gap-5 xl:grid-cols-2">
+        <StatusChart data={analytics.statusDistribution} />
+        <CategoryChart data={analytics.categoryDistribution} />
       </section>
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <TrendChart data={analytics.trend} mode="reportedVsResolved" />
+        <TrendChart data={analytics.trend} mode="backlog" />
+      </section>
+
+      <HeatmapPlaceholder />
     </div>
   );
 }

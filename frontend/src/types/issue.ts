@@ -1,23 +1,66 @@
-export type IssueStatus = "Open" | "In Review" | "In Progress" | "Resolved";
+export type IssueStatus = "Open" | "In Review" | "In Progress" | "Resolved" | "Backlog";
+export type IssuePriority = "Low" | "Medium" | "High";
 
-export type AccessibilityCategory =
-  | "Sidewalk Obstruction"
-  | "Broken Ramp"
-  | "Crosswalk Signal"
-  | "Transit Access"
-  | "Building Entrance"
-  | "Wayfinding"
-  | "Washroom Access"
+export type IssueCategory =
+  | "Pothole"
+  | "Broken Streetlight"
+  | "Flooding"
+  | "Sidewalk Accessibility"
+  | "Safety Hazard"
+  | "Garbage Collection"
+  | "Traffic Signal"
+  | "Park Maintenance"
+  | "Noise Complaint"
   | "Other";
+
+// Alias kept for backward compatibility in citizen-facing forms.
+export type AccessibilityCategory = IssueCategory;
+
+export interface IssueFilters {
+  status: "All" | IssueStatus;
+  category: "All" | IssueCategory;
+  priority: "All" | IssuePriority;
+  search: string;
+}
+
+export interface IssueStats {
+  totalIssues: number;
+  openIssues: number;
+  inProgress: number;
+  resolved: number;
+  highPriority: number;
+  backlog: number;
+}
+
+export interface DistributionPoint {
+  name: string;
+  count: number;
+}
+
+export interface IssueTrendPoint {
+  date: string;
+  reported: number;
+  resolved: number;
+  open: number;
+  backlog: number;
+}
+
+export interface IssueAnalyticsData {
+  statusDistribution: DistributionPoint[];
+  categoryDistribution: DistributionPoint[];
+  trend: IssueTrendPoint[];
+}
 
 export interface Issue {
   id: string;
   title: string;
   description: string;
-  category: AccessibilityCategory;
+  category: IssueCategory;
   status: IssueStatus;
   location: string;
-  priority: "Low" | "Medium" | "High";
+  priority: IssuePriority;
+  assignedTo?: string;
+  keywords?: string[];
   imageUrl?: string;
   aiSummary?: string;
   reportedBy?: string;
