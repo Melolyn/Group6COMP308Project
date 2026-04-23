@@ -8,6 +8,7 @@ export const ASSIGN_ISSUE_MUTATION = gql`
       status
       assignedTo
       priority
+      updatedAt   # helpful for UI refresh / sorting
     }
   }
 `;

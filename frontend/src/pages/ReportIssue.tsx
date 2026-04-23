@@ -2,18 +2,16 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { issueService } from "../services/issueService";
-import type { IssueCategory } from "../types/issue";
+import type { AccessibilityCategory } from "../types/issue";
 
-const categories: IssueCategory[] = [
-  "Pothole",
-  "Broken Streetlight",
-  "Flooding",
-  "Sidewalk Accessibility",
-  "Safety Hazard",
-  "Garbage Collection",
-  "Traffic Signal",
-  "Park Maintenance",
-  "Noise Complaint",
+const categories: AccessibilityCategory[] = [
+  "Sidewalk Obstruction",
+  "Broken Ramp",
+  "Crosswalk Signal",
+  "Transit Access",
+  "Building Entrance",
+  "Wayfinding",
+  "Washroom Access",
   "Other",
 ];
 
@@ -25,7 +23,7 @@ export default function ReportIssue() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    category: "Pothole" as IssueCategory,
+    category: "Broken Ramp" as AccessibilityCategory,
     location: "",
     priority: "Medium" as "Low" | "Medium" | "High",
     imageUrl: "",
@@ -84,7 +82,7 @@ export default function ReportIssue() {
               <label className="mb-2 block text-sm font-medium text-slate-700">Category</label>
               <select
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value as IssueCategory })}
+                onChange={(e) => setForm({ ...form, category: e.target.value as AccessibilityCategory })}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-sky-600 focus:outline-none"
               >
                 {categories.map((category) => (
