@@ -1,0 +1,21 @@
+const jwt = require("jsonwebtoken");
+
+module.exports = (req) => {
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+};

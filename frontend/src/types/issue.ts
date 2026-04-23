@@ -10,6 +10,8 @@ export type AccessibilityCategory =
   | "Washroom Access"
   | "Other";
 
+export type IssuePriority = "Low" | "Medium" | "High";
+
 export interface Issue {
   id: string;
   title: string;
@@ -17,10 +19,16 @@ export interface Issue {
   category: AccessibilityCategory;
   status: IssueStatus;
   location: string;
-  priority: "Low" | "Medium" | "High";
+  priority: IssuePriority;
+
+  // 🔥 NEW FIELD (assignment)
+  assignedTo?: string;
+
   imageUrl?: string;
   aiSummary?: string;
+
   reportedBy?: string;
+
   createdAt: string;
   updatedAt: string;
 }

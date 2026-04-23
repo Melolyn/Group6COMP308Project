@@ -9,6 +9,16 @@ import {
 
 import picture from "../assets/picture.jpg";
 
+type AppUserRole = "resident" | "staff" | "advocate";
+
+type StoredUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: AppUserRole;
+};
+
 const highlights = [
   {
     title: "Report accessibility barriers",
@@ -36,31 +46,61 @@ const highlights = [
   },
 ];
 
+function getCurrentUser(): StoredUser | null {
+  const raw = localStorage.getItem("civicai_user");
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredUser;
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
+  const user = getCurrentUser();
+
+  const isResident = user?.role === "resident";
+  const isStaff = user?.role === "staff";
+  const isAdvocate = user?.role === "advocate";
+
+  const heroTitle = isStaff
+    ? "Support faster issue response across the city."
+    : isAdvocate
+    ? "Monitor accessibility trends and help residents effectively."
+    : "Building a more accessible city starts with you.";
+
+  const heroSubtitle = isStaff
+    ? "Review reported barriers, update statuses, and prioritize high-impact accessibility issues."
+    : isAdvocate
+    ? "Use analytics and insights to identify patterns, support residents, and improve accessibility awareness."
+    : "Report barriers, follow issue progress, and support a more inclusive city through accessible service design.";
+
   return (
-    
     <div className="space-y-10">
-            <section className="relative h-[400px] md:h-[500px] w-full overflow-hidden rounded-3xl">
-            {/* Background Image */}
-            <img
-                src={picture}
-                alt="Accessibility pathway with wheelchair user"
-                className="absolute inset-0 h-full w-full object-cover"
-            />
+      <section className="relative h-[400px] w-full overflow-hidden rounded-3xl md:h-[500px]">
+        <img
+          src={picture}
+          alt="Accessibility pathway with wheelchair user"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
 
-            {/* Overlay */}
-             <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/40" />
 
-            {/* Content */}
-            <div className="relative z-10 flex h-full flex-col justify-center px-6 md:px-12 text-white">
-                <h1 className="text-4xl md:text-5xl font-bold max-w-2xl">
-                Building a more accessible city starts with you.
-                </h1>
+        <div className="relative z-10 flex h-full flex-col justify-center px-6 text-white md:px-12">
+          <h1 className="max-w-2xl text-4xl font-bold md:text-5xl">
+            {heroTitle}
+          </h1>
 
-                
-            </div>
-            </section>
-      {/* HERO */}
+          {user && (
+            <p className="mt-4 text-sm font-medium text-sky-100 md:text-base">
+              Welcome back, {user.firstName}. Signed in as{" "}
+              <span className="capitalize">{user.role}</span>.
+            </p>
+          )}
+        </div>
+      </section>
+
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
           <div className="bg-gradient-to-br from-sky-800 via-sky-700 to-cyan-700 px-6 py-12 text-white md:px-10 lg:px-12">
@@ -69,32 +109,97 @@ export default function Home() {
             </p>
 
             <h2 className="max-w-3xl text-4xl font-bold md:text-5xl">
-              Help make public spaces easier and safer for everyone to access.
+              {isStaff
+                ? "Manage accessibility issues and improve service response."
+                : isAdvocate
+                ? "Track trends and strengthen accessibility advocacy."
+                : "Help make public spaces easier and safer for everyone to access."}
             </h2>
 
-            <p className="mt-5 max-w-2xl text-sky-50">
-              Report barriers, follow issue progress, and support a more inclusive
-              city through accessible service design.
-            </p>
+            <p className="mt-5 max-w-2xl text-sky-50">{heroSubtitle}</p>
 
-            <div className="mt-8 flex gap-3">
-              <Link
-                to="/report"
-                className="rounded-xl bg-white px-5 py-3 font-semibold text-sky-800 hover:bg-sky-50"
-              >
-                Report an Issue
-              </Link>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {!user && (
+                <>
+                  <Link
+                    to="/login"
+                    className="rounded-xl bg-white px-5 py-3 font-semibold text-sky-800 hover:bg-sky-50"
+                  >
+                    Login
+                  </Link>
 
-              <Link
-                to="/my-issues"
-                className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
-              >
-                View My Issues
-              </Link>
+                  <Link
+                    to="/register"
+                    className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
+
+              {isResident && (
+                <>
+                  <Link
+                    to="/report"
+                    className="rounded-xl bg-white px-5 py-3 font-semibold text-sky-800 hover:bg-sky-50"
+                  >
+                    Report an Issue
+                  </Link>
+
+                  <Link
+                    to="/my-issues"
+                    className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
+                  >
+                    View My Issues
+                  </Link>
+
+                  <Link
+                    to="/dashboard"
+                    className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              )}
+
+              {isStaff && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="rounded-xl bg-white px-5 py-3 font-semibold text-sky-800 hover:bg-sky-50"
+                  >
+                    Open Staff Dashboard
+                  </Link>
+
+                  <Link
+                    to="/analytics"
+                    className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
+                  >
+                    View Analytics
+                  </Link>
+                </>
+              )}
+
+              {isAdvocate && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="rounded-xl bg-white px-5 py-3 font-semibold text-sky-800 hover:bg-sky-50"
+                  >
+                    Open Dashboard
+                  </Link>
+
+                  <Link
+                    to="/analytics"
+                    className="rounded-xl border border-white/30 px-5 py-3 text-white hover:bg-white/10"
+                  >
+                    View Trends
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
-          {/* SIDE PANEL */}
           <div className="bg-slate-50 px-6 py-10 md:px-10">
             <h3 className="text-lg font-semibold text-slate-900">
               Accessibility focus areas
@@ -118,7 +223,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES */}
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {highlights.map(({ title, description, icon: Icon }) => (
           <div
