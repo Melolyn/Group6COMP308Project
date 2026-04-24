@@ -1,4 +1,11 @@
-import type { Issue, IssueCategory, IssueFilters, IssuePriority, IssueStatus } from "../../types/issue";
+import type { Issue, IssueCategory, IssuePriority, IssueStatus } from "../../types/issue";
+
+interface IssueFilters {
+  status: "All" | IssueStatus;
+  category: "All" | IssueCategory;
+  priority: "All" | IssuePriority;
+  search: string;
+}
 
 interface IssueFiltersProps {
   filters: IssueFilters;

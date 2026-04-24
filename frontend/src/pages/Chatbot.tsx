@@ -12,7 +12,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
-      text: "Hi, I’m CivicBot. Ask me about open issues, trends, accessibility barriers, or recent reports.",
+      text: "Hello, I’m CivicBot. How can I help you today?",
     },
   ]);
 
@@ -40,7 +40,10 @@ export default function Chatbot() {
         ...prev,
         {
           role: "bot",
-          text: err instanceof Error ? err.message : "Failed to get response.",
+          text:
+            err instanceof Error
+              ? err.message
+              : "Sorry, I couldn’t process that request.",
         },
       ]);
     } finally {
@@ -55,7 +58,7 @@ export default function Chatbot() {
       <div className="border-b border-slate-200 bg-sky-700 px-4 py-3 text-white">
         <h2 className="text-base font-bold">CivicBot Assistant</h2>
         <p className="mt-1 text-xs text-sky-100">
-          Ask about issue trends, accessibility barriers, and city service insights.
+          Ask questions, report concerns, or get quick help.
         </p>
       </div>
 
@@ -75,7 +78,7 @@ export default function Chatbot() {
 
         {loading && (
           <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-800 shadow-sm">
-            CivicBot is thinking...
+            CivicBot is preparing a response...
           </div>
         )}
 
@@ -87,7 +90,7 @@ export default function Chatbot() {
           <input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ask about accessibility issues..."
+            placeholder="Type your question here..."
             className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-sky-600 focus:outline-none"
           />
           <button

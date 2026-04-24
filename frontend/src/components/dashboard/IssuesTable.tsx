@@ -6,7 +6,7 @@ interface IssuesTableProps {
   onUpdateStatus: (issueId: string, status: IssueStatus) => void;
 }
 
-const statusClasses: Record<IssueStatus, string> = {
+const statusClasses: Record<IssueStatus | "Backlog", string> = {
   Open: "bg-amber-100 text-amber-800",
   "In Review": "bg-sky-100 text-sky-800",
   "In Progress": "bg-indigo-100 text-indigo-800",

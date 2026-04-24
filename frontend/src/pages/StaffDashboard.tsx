@@ -522,9 +522,7 @@ export default function StaffDashboard() {
             </div>
           </section>
         </div>
-      ) : (
-        <IssuesTable issues={filteredIssues} onUpdateStatus={handleStatusUpdate} />
-      )}
+      </section>
     </div>
   );
 }

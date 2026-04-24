@@ -10,21 +10,44 @@ if (apiKey) {
   model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 }
 
+function formatIssuesForPrompt(issues) {
+  if (!issues.length) return "No recent issues available.";
+
+  return issues
+    .map((issue, index) => {
+      return `
+Issue ${index + 1}
+Title: ${issue.title || "N/A"}
+Category: ${issue.category || "N/A"}
+Status: ${issue.status || "N/A"}
+Location: ${issue.location || "N/A"}
+Priority: ${issue.priority || "N/A"}
+Summary: ${issue.aiSummary || "N/A"}
+Reported At: ${
+        issue.createdAt
+          ? new Date(issue.createdAt).toLocaleDateString("en-CA")
+          : "N/A"
+      }
+      `.trim();
+    })
+    .join("\n\n");
+}
+
 async function generateIssueInsights(issueInput) {
   if (!model) {
     return {
       aiSummary: `Accessibility issue reported: ${issueInput.title}. Located at ${issueInput.location}.`,
       aiCategory: issueInput.category,
-      aiPriorityReason: "Gemini API key not configured, using fallback summary.",
+      aiPriorityReason: "AI service unavailable, using fallback insight.",
     };
   }
 
   const prompt = `
-You are an AI assistant for a Canadian municipal accessibility issue tracker.
+You are an AI assistant for a municipal accessibility reporting system.
 
 Analyze this issue report and return JSON only.
 
-Issue Title: ${issueInput.title}
+Title: ${issueInput.title}
 Description: ${issueInput.description}
 Category: ${issueInput.category}
 Location: ${issueInput.location}
@@ -32,9 +55,9 @@ Priority: ${issueInput.priority}
 
 Return JSON in this exact format:
 {
-  "aiSummary": "2-3 sentence concise public-service summary",
+  "aiSummary": "2-3 sentence clear and helpful summary",
   "aiCategory": "best matching category",
-  "aiPriorityReason": "short explanation for why this priority makes sense"
+  "aiPriorityReason": "short reason why this priority makes sense"
 }
 `;
 
@@ -58,47 +81,53 @@ Return JSON in this exact format:
     return {
       aiSummary: `Accessibility issue reported: ${issueInput.title}. Located at ${issueInput.location}.`,
       aiCategory: issueInput.category,
-      aiPriorityReason: "Gemini request failed, using fallback summary.",
+      aiPriorityReason: "AI request failed, using fallback insight.",
     };
   }
 }
 
-async function chatWithCivicBot(prompt) {
-  const recentIssues = await Issue.find()
-    .sort({ createdAt: -1 })
-    .limit(10)
-    .select("title category status location priority aiSummary createdAt");
+async function chatWithCivicBot(userPrompt) {
+  const normalizedPrompt = userPrompt.trim().toLowerCase();
 
-  const issueContext = recentIssues.length
-    ? recentIssues
-        .map(
-          (issue, index) =>
-            `${index + 1}. Title: ${issue.title} | Category: ${issue.category} | Status: ${issue.status} | Location: ${issue.location} | Priority: ${issue.priority} | Summary: ${issue.aiSummary || "N/A"}`
-        )
-        .join("\n")
-    : "No recent issues available.";
-
-  if (!model) {
-    return `CivicBot fallback response: I can help with issue status, trends, and accessibility reports. Current recent issue context: ${issueContext}`;
+  if (["hi", "hello", "hey"].includes(normalizedPrompt)) {
+    return "Hello! How can I help you today?";
   }
 
+  if (normalizedPrompt.includes("how are you")) {
+    return "I’m doing well, thanks for asking. How can I help you today?";
+  }
+
+  if (!model) {
+    return "I can help with accessibility issues, reporting guidance, and general advice. AI service is currently unavailable.";
+  }
+
+  const issues = await Issue.find().sort({ createdAt: -1 }).limit(20);
+  const issueContext = formatIssuesForPrompt(issues);
+
   const chatbotPrompt = `
-You are CivicBot, an AI assistant for a Canadian municipality accessibility issue tracker.
+You are CivicBot, a friendly and helpful assistant for a Canadian civic accessibility system.
 
-Your job:
-- Answer questions about local accessibility issues
-- Summarize open/resolved trends
-- Be concise, practical, and helpful
-- If the user asks about trends, base it on the recent issue data below
-- If the user asks something unrelated, politely steer back to civic accessibility reporting, municipal issue tracking, or public service insights
+Your role:
+- help users report and understand accessibility issues
+- answer questions based on available issue data
+- provide practical advice and guidance
 
-Recent issue data:
+Style rules:
+- friendly, natural, and professional
+- concise but helpful
+- advise and guide, do not warn unnecessarily
+- avoid robotic phrases like "as an AI"
+- keep answers short unless more detail is needed
+
+If data is missing, say so honestly.
+
+Issue data:
 ${issueContext}
 
-User question:
-${prompt}
+User:
+${userPrompt}
 
-Answer in a clear, helpful, municipal-service style.
+Reply:
 `;
 
   try {
@@ -106,7 +135,7 @@ Answer in a clear, helpful, municipal-service style.
     return result.response.text().trim();
   } catch (error) {
     console.error("Gemini chatbot error:", error.message);
-    return "I’m having trouble generating a response right now. Please try again.";
+    return "I can still help with reporting issues, tracking updates, and general accessibility guidance. What would you like to know?";
   }
 }
 
