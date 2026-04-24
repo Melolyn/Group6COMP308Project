@@ -1,29 +1,7 @@
-<<<<<<< Rohit-Budha
 import { CombinedGraphQLErrors } from "@apollo/client/errors";
 import { gql } from "@apollo/client";
 import { apolloClient } from "./apolloClient";
 import type { Issue } from "../types/issue";
-=======
-import { mockIssues } from "../data/mockIssues";
-import type { Issue, IssueStats } from "../types/issue";
-
-function delay(ms = 450) {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
-function calculateIssueStats(issues: Issue[]): IssueStats {
-  return {
-    totalIssues: issues.length,
-    openIssues: issues.filter((issue) => issue.status === "Open").length,
-    inProgress: issues.filter((issue) => issue.status === "In Progress").length,
-    resolved: issues.filter((issue) => issue.status === "Resolved").length,
-    highPriority: issues.filter((issue) => issue.priority === "High").length,
-    backlog: issues.filter((issue) => issue.status === "Backlog").length,
-  };
-}
->>>>>>> main
 
 const GET_ALL_ISSUES = gql`
   query GetAllIssues {
@@ -334,7 +312,6 @@ const mapIssue = (issue: IssueApiResponse): Issue => ({
 
 export const issueService = {
   async getAllIssues(): Promise<Issue[]> {
-<<<<<<< Rohit-Budha
     try {
       const result = await apolloClient.query<GetAllIssuesQuery>({
         query: GET_ALL_ISSUES,
@@ -378,24 +355,9 @@ export const issueService = {
       console.error("Get my issues error:", getErrorMessage(error));
       handleApolloResultError(error, "Failed to load your issues");
     }
-=======
-    await delay();
-    return Promise.resolve(mockIssues);
->>>>>>> main
-  },
-
-  async getStaffIssues(): Promise<Issue[]> {
-    await delay();
-    return Promise.resolve(mockIssues);
-  },
-
-  async getIssueStats(): Promise<IssueStats> {
-    await delay();
-    return Promise.resolve(calculateIssueStats(mockIssues));
   },
 
   async getIssueById(id: string): Promise<Issue | undefined> {
-<<<<<<< Rohit-Budha
     try {
       const result = await apolloClient.query<GetIssueByIdQuery, GetIssueByIdVariables>({
         query: GET_ISSUE_BY_ID,
@@ -485,10 +447,6 @@ export const issueService = {
       console.error("Update issue status error:", getErrorMessage(error));
       handleApolloResultError(error, "Failed to update issue status");
     }
-=======
-    await delay();
-    return Promise.resolve(mockIssues.find((issue) => issue.id === id));
->>>>>>> main
   },
 
   async assignIssue(id: string, assignedTo: string): Promise<Issue> {

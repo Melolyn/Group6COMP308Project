@@ -18,6 +18,7 @@ module.exports = gql`
     location: String!
     priority: String!
     assignedTo: String
+    assignedAt: String
     upvotes: Int
     supportedByCurrentUser: Boolean
     imageUrl: String
@@ -27,6 +28,15 @@ module.exports = gql`
     reportedBy: User
     createdAt: String
     updatedAt: String
+  }
+
+  type Notification {
+    id: ID!
+    message: String!
+    type: String!
+    isRead: Boolean!
+    createdAt: String
+    issue: Issue
   }
 
   type AuthPayload {
@@ -70,6 +80,7 @@ module.exports = gql`
     issue(id: ID!): Issue
     analyticsOverview: AnalyticsOverview!
     chatWithCivicBot(prompt: String!): String!
+    myNotifications: [Notification!]!
   }
 
   type Mutation {

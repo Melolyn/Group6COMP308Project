@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const Issue = require("../models/Issue");
+const Notification = require("../models/Notification");
 const generateToken = require("../utils/generateToken");
 const {
   generateIssueInsights,
@@ -9,8 +10,6 @@ const {
 } = require("../services/geminiService");
 
 module.exports = {
-  // Field resolver for Issue
-  // Lets frontend know whether the current logged-in user already supported the issue
   Issue: {
     supportedByCurrentUser: (issue, _, { user }) => {
       if (!user || !issue.supporters) return false;
@@ -22,31 +21,27 @@ module.exports = {
   },
 
   Query: {
-    // Return currently logged-in user
     me: async (_, __, { user }) => {
       if (!user) return null;
       return await User.findById(user.id);
     },
 
-    // Return all issues for staff / advocate dashboards
     issues: async () => {
       return await Issue.find().populate("reportedBy").sort({ createdAt: -1 });
     },
 
-    // Return only issues reported by the logged-in resident
     myIssues: async (_, __, { user }) => {
       if (!user) throw new Error("Not authenticated");
+
       return await Issue.find({ reportedBy: user.id })
         .populate("reportedBy")
         .sort({ createdAt: -1 });
     },
 
-    // Return one issue by id
     issue: async (_, { id }) => {
       return await Issue.findById(id).populate("reportedBy");
     },
 
-    // Summary counts for analytics dashboard
     analyticsOverview: async () => {
       const totalIssues = await Issue.countDocuments();
       const openIssues = await Issue.countDocuments({ status: "Open" });
@@ -63,14 +58,20 @@ module.exports = {
       };
     },
 
-    // Gemini-powered civic chatbot
     chatWithCivicBot: async (_, { prompt }) => {
       return await chatWithCivicBot(prompt);
+    },
+
+    myNotifications: async (_, __, { user }) => {
+      if (!user) throw new Error("Not authenticated");
+
+      return await Notification.find({ user: user.id })
+        .populate("issue")
+        .sort({ createdAt: -1 });
     },
   },
 
   Mutation: {
-    // Register a new user
     register: async (_, { input }) => {
       const existingUser = await User.findOne({ email: input.email });
       if (existingUser) throw new Error("User already exists");
@@ -91,7 +92,6 @@ module.exports = {
       };
     },
 
-    // Login existing user
     login: async (_, { input }) => {
       const user = await User.findOne({ email: input.email });
       if (!user) throw new Error("Invalid email or password");
@@ -105,7 +105,6 @@ module.exports = {
       };
     },
 
-    // Resident creates a new issue
     createIssue: async (_, { input }, { user }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -124,10 +123,16 @@ module.exports = {
         reportedBy: user.id,
       });
 
+      await Notification.create({
+        user: user.id,
+        issue: issue._id,
+        message: `Your issue "${issue.title}" has been submitted successfully.`,
+        type: "Issue Created",
+      });
+
       return await Issue.findById(issue._id).populate("reportedBy");
     },
 
-    // Staff updates issue workflow status
     updateIssueStatus: async (_, { id, status }, { user }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -140,25 +145,42 @@ module.exports = {
         throw new Error("Invalid status value");
       }
 
-      const updatedIssue = await Issue.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true }
-      ).populate("reportedBy");
-
-      if (!updatedIssue) {
+      const issue = await Issue.findById(id);
+      if (!issue) {
         throw new Error("Issue not found");
       }
 
-      return updatedIssue;
+      issue.status = status;
+      await issue.save();
+
+      await Notification.create({
+        user: issue.reportedBy,
+        issue: issue._id,
+        message: `Your issue "${issue.title}" status was updated to ${issue.status}.`,
+        type: status === "Resolved" ? "Issue Resolved" : "Status Updated",
+      });
+
+      return await Issue.findById(issue._id).populate("reportedBy");
     },
 
-    // Staff assigns issue to a municipal team
     assignIssue: async (_, { id, assignedTo }, { user }) => {
       if (!user) throw new Error("Not authenticated");
 
       if (user.role !== "staff") {
         throw new Error("Unauthorized");
+      }
+
+      const allowedTeams = [
+        "Unassigned",
+        "Accessibility Team",
+        "Transit Accessibility Unit",
+        "Municipal Maintenance",
+        "Traffic Signals",
+        "Road Safety Team",
+      ];
+
+      if (!allowedTeams.includes(assignedTo)) {
+        throw new Error("Invalid assignment team");
       }
 
       const issue = await Issue.findById(id);
@@ -167,18 +189,27 @@ module.exports = {
       }
 
       issue.assignedTo = assignedTo;
+      issue.assignedAt = assignedTo === "Unassigned" ? null : new Date();
 
-      // Move newly assigned issue into review automatically
-      if (issue.status === "Open") {
+      if (assignedTo !== "Unassigned" && issue.status === "Open") {
         issue.status = "In Review";
       }
 
       await issue.save();
 
+      await Notification.create({
+        user: issue.reportedBy,
+        issue: issue._id,
+        message:
+          assignedTo === "Unassigned"
+            ? `Your issue "${issue.title}" has been unassigned.`
+            : `Your issue "${issue.title}" has been assigned to ${assignedTo}.`,
+        type: "Issue Assigned",
+      });
+
       return await Issue.findById(issue._id).populate("reportedBy");
     },
 
-    // Community Advocate supports an issue once only
     upvoteIssue: async (_, { id }, { user }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -191,12 +222,10 @@ module.exports = {
         throw new Error("Issue not found");
       }
 
-      // Make sure supporters array exists
       if (!issue.supporters) {
         issue.supporters = [];
       }
 
-      // Prevent duplicate support from the same advocate
       const alreadySupported = issue.supporters.some(
         (supporterId) => supporterId.toString() === user.id.toString()
       );
@@ -205,10 +234,7 @@ module.exports = {
         throw new Error("You have already supported this issue");
       }
 
-      // Add current user to supporters list
       issue.supporters.push(new mongoose.Types.ObjectId(user.id));
-
-      // Keep upvotes count synced with unique supporters
       issue.upvotes = issue.supporters.length;
 
       await issue.save();

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { BellRing, ClipboardList, ShieldCheck, TriangleAlert } from "lucide-react";
 import { issueService } from "../services/issueService";
+import NotificationPanel from "../components/NotificationPanel";
 import type { Issue } from "../types/issue";
 
 const statusClasses: Record<string, string> = {
@@ -165,6 +166,8 @@ export default function ResidentDashboard() {
         </div>
 
         <div className="space-y-6">
+          <NotificationPanel />
+
           <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
             <div className="flex items-center gap-2">
               <BellRing size={18} className="text-amber-700" />
